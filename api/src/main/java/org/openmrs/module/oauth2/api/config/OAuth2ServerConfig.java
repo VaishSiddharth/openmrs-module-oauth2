@@ -29,7 +29,7 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 public class OAuth2ServerConfig {
 	
 	private static final String OPENMRS_RESOURCE_ID = "OpenMRS";
-
+	
 	@Bean(name = "oauthAuthenticationEntryPoint")
 	public AuthenticationEntryPoint getOauthAuthenticationEntryPoint() {
 		OAuth2AuthenticationEntryPoint authenticationEntryPoint = new OAuth2AuthenticationEntryPoint();
@@ -52,7 +52,7 @@ public class OAuth2ServerConfig {
 			super.configure(http);
 		}
 	}
-
+	
 	@Bean(name = "clientAuthenticationEntryPoint")
 	public AuthenticationEntryPoint getClientAuthenticationEntryPoint() {
 		OAuth2AuthenticationEntryPoint authenticationEntryPoint = new OAuth2AuthenticationEntryPoint();
@@ -60,7 +60,7 @@ public class OAuth2ServerConfig {
 		authenticationEntryPoint.setTypeName("Basic");
 		return authenticationEntryPoint;
 	}
-
+	
 	@Bean(name = "userAuthenticationProvider")
 	public AuthenticationEntryPoint getUserAuthenticationProvider() {
 		OAuth2AuthenticationEntryPoint authenticationEntryPoint = new OAuth2AuthenticationEntryPoint();
@@ -73,7 +73,7 @@ public class OAuth2ServerConfig {
 	public AuthenticationProvider getClientControllerAuthenticationProvider() {
 		return new ClientManagementControllerAuthenticationServiceImpl();
 	}
-
+	
 	@Bean(name = "clientControllerAuthenticationManager")
 	public AuthenticationManager getClientControllerAuthenticationManager() {
 		return null;//TODO what do return here?
