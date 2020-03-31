@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 /**
  * This class enhances the access token response by adding custom values according to the Launch Context
  */
-@Component
+@Component("tokenEnhancer")
 public class CustomTokenEnhancer implements TokenEnhancer {
 
 	@Override

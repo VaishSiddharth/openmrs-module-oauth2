@@ -1,4 +1,4 @@
-package org.openmrs.module.oauth2.api.config;
+package org.openmrs.module.oauth2.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

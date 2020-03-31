@@ -1,4 +1,4 @@
-package org.openmrs.module.oauth2.api.config;
+package org.openmrs.module.oauth2.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,14 +28,6 @@ public class App2ConfigurationAdapter extends WebSecurityConfigurerAdapter {
         //TODO use-expressions="false" authentication-manager-ref="authenticationManager" not added
 
     }
-	
-	@Bean(name = "userAuthenticationProvider")
-	public AuthenticationEntryPoint getUserAuthenticationProvider() {
-		OAuth2AuthenticationEntryPoint authenticationEntryPoint = new OAuth2AuthenticationEntryPoint();
-		authenticationEntryPoint.setRealmName("openmrs/client");
-		authenticationEntryPoint.setTypeName("Basic");
-		return authenticationEntryPoint;
-	}
 	
 	@Bean(name = BeanIds.AUTHENTICATION_MANAGER)
 	@Override

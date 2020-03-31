@@ -1,12 +1,8 @@
-package org.openmrs.module.oauth2.api.config;
+package org.openmrs.module.oauth2.config;
 
-import org.openmrs.module.oauth2.api.impl.ClientManagementControllerAuthenticationServiceImpl;
 import org.openmrs.module.oauth2.api.impl.UserAuthenticationServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -15,19 +11,9 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
-  
-//    @Autowired
-//    private ClientManagementControllerAuthenticationServiceImpl clientManagementControllerAuthenticationService;
 
     @Autowired
     private UserAuthenticationServiceImpl userAuthenticationService;
-
-    @Bean(name = "userAuthenticationProvider")
-    public AuthenticationProvider getUserAuthenticationProvider() {
-        UserAuthenticationServiceImpl authenticationService = new UserAuthenticationServiceImpl();
-        authenticationService.setTypeName("Basic");
-        return authenticationService;
-    }
  
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {

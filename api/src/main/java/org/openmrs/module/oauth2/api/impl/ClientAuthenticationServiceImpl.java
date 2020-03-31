@@ -10,12 +10,14 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 /**
  * Created by OPSKMC on 8/20/15.
  */
+@Component("clientAuthenticationProvider")
 public class ClientAuthenticationServiceImpl implements AuthenticationProvider {
     private static final Log log = LogFactory.getLog(ClientAuthenticationServiceImpl.class);
     @Autowired

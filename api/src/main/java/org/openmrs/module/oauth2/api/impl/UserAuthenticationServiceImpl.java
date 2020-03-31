@@ -7,6 +7,7 @@ import org.openmrs.api.context.Context;
 import org.openmrs.api.db.LoginCredential;
 import org.openmrs.api.db.UserDAO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -14,6 +15,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +23,7 @@ import java.util.List;
 /**
  * Created by OPSKMC on 8/18/15.
  */
+@Component("userAuthenticationService")
 public class UserAuthenticationServiceImpl implements AuthenticationProvider {
 
 	private static final Log log = LogFactory.getLog(UserAuthenticationServiceImpl.class);
@@ -52,6 +55,7 @@ public class UserAuthenticationServiceImpl implements AuthenticationProvider {
 		return (UsernamePasswordAuthenticationToken.class.isAssignableFrom(authentication));
 	}
 
+	@Value("Basic")
 	public void setTypeName(String typeName) {
 		this.typeName = typeName;
 	}

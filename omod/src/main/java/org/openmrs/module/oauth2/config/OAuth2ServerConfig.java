@@ -1,17 +1,15 @@
-package org.openmrs.module.oauth2.api.config;
+package org.openmrs.module.oauth2.config;
 
-import org.openmrs.module.oauth2.Client;
+import com.mchange.v2.c3p0.DriverManagerDataSource;
+
 import org.openmrs.module.oauth2.api.impl.ClientDetailsServiceImpl;
-import org.openmrs.module.oauth2.api.impl.ClientManagementControllerAuthenticationServiceImpl;
-import org.openmrs.module.oauth2.api.impl.UserAuthenticationServiceImpl;
+import org.openmrs.module.oauth2.web.util.CustomTokenEnhancer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
@@ -21,9 +19,15 @@ import org.springframework.security.oauth2.config.annotation.web.configurers.Aut
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.ResourceServerSecurityConfigurer;
 import org.springframework.security.oauth2.provider.approval.UserApprovalHandler;
+import org.springframework.security.oauth2.provider.client.ClientCredentialsTokenEndpointFilter;
 import org.springframework.security.oauth2.provider.error.OAuth2AuthenticationEntryPoint;
+import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
 import org.springframework.security.oauth2.provider.token.TokenStore;
+import org.springframework.security.oauth2.provider.token.store.JdbcTokenStore;
 import org.springframework.security.web.AuthenticationEntryPoint;
+import sun.tools.jstat.Token;
+
+import javax.sql.DataSource;
 
 @Configuration
 public class OAuth2ServerConfig {
@@ -61,40 +65,54 @@ public class OAuth2ServerConfig {
 		return authenticationEntryPoint;
 	}
 	
-	@Bean(name = "userAuthenticationProvider")
-	public AuthenticationEntryPoint getUserAuthenticationProvider() {
-		OAuth2AuthenticationEntryPoint authenticationEntryPoint = new OAuth2AuthenticationEntryPoint();
-		authenticationEntryPoint.setRealmName("openmrs/client");
-		authenticationEntryPoint.setTypeName("Basic");
-		return authenticationEntryPoint;
-	}
-	
-	@Bean(name = "clientControllerAuthenticationProvider")
-	public AuthenticationProvider getClientControllerAuthenticationProvider() {
-		return new ClientManagementControllerAuthenticationServiceImpl();
-	}
-	
-	@Bean(name = "clientControllerAuthenticationManager")
-	public AuthenticationManager getClientControllerAuthenticationManager() {
-		return null;//TODO what do return here?
-	}
-	
 	@Configuration
 	@EnableAuthorizationServer
 	protected static class AuthorizationServerConfiguration extends AuthorizationServerConfigurerAdapter {
-		
+
 		@Autowired
-		private TokenStore tokenStore;//TODO change with JdbcTokenStore after creating a component (not sure)
-		
+		private CustomTokenEnhancer customTokenEnhancer;
+
 		@Autowired
-		private ClientDetailsServiceImpl clientDetailsService; //TODO add @Component to ClientDetailsServiceImpl
+		private ClientDetailsServiceImpl clientDetailsService;
 		
 		@Autowired
 		private UserApprovalHandler userApprovalHandler;
 		
 		@Autowired
-		@Qualifier("authenticationManagerBean")
-		private AuthenticationManager authenticationManager;//TODO Client & User Authentication Service impl present
+		@Qualifier("authenticationManager")
+		private AuthenticationManager authenticationManager;
+		
+		@Bean(name = "clientControllerAuthenticationManager")
+		public ClientCredentialsTokenEndpointFilter getClientControllerAuthenticationManager() {
+			ClientCredentialsTokenEndpointFilter clientCredentialsTokenEndpointFilter = new ClientCredentialsTokenEndpointFilter();
+			clientCredentialsTokenEndpointFilter.setAuthenticationManager(authenticationManager);
+			return clientCredentialsTokenEndpointFilter;
+		}
+		
+		@Bean(name = "jdbcTemplate")
+		public DataSource getJdbcTemplate() {
+			DriverManagerDataSource dataSource = new DriverManagerDataSource();
+			dataSource.setDriverClass("com.mysql.jdbc.Driver");
+			dataSource.setJdbcUrl("jdbc:mysql://localhost:3306/openmrs");
+			dataSource.setUser("root");
+			dataSource.setPassword("root");
+			return dataSource;
+		}
+		
+		@Bean(name = "tokenServices")
+		public DefaultTokenServices getTokenServices() {
+			DefaultTokenServices tokenServices = new DefaultTokenServices();
+			tokenServices.setTokenStore(getTokenStore());
+			tokenServices.setSupportRefreshToken(true);
+			tokenServices.setClientDetailsService(clientDetailsService);
+			tokenServices.setTokenEnhancer(customTokenEnhancer);
+			return tokenServices;
+		}
+		
+		@Bean(name = "tokenStore")
+		public TokenStore getTokenStore() {
+			return new JdbcTokenStore(getJdbcTemplate());
+		}
 		
 		@Override
 		public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
@@ -108,7 +126,7 @@ public class OAuth2ServerConfig {
 		
 		@Override
 		public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
-			endpoints.tokenStore(tokenStore).userApprovalHandler(userApprovalHandler)
+			endpoints.tokenStore(getTokenStore()).userApprovalHandler(userApprovalHandler)
 			        .authenticationManager(authenticationManager);
 		}
 	}

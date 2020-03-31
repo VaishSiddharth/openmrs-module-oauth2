@@ -1,4 +1,4 @@
-package org.openmrs.module.oauth2.api.config;
+package org.openmrs.module.oauth2.config;
 
 import org.openmrs.module.oauth2.Client;
 import org.openmrs.module.oauth2.api.impl.ClientManagementControllerAuthenticationServiceImpl;
@@ -75,12 +75,6 @@ public class App1ConfigurationAdapter extends WebSecurityConfigurerAdapter {
 			e.printStackTrace();
 		}
 		return clientCredentialsTokenEndpointFilter;
-	}
-	
-	@Bean(name = "clientControllerAuthenticationProvider")
-	public ClientManagementControllerAuthenticationServiceImpl getClientManagementControllerAuthenticationServiceImpl() {
-		ClientManagementControllerAuthenticationServiceImpl clientManagementControllerAuthenticationService = new ClientManagementControllerAuthenticationServiceImpl();
-		return clientManagementControllerAuthenticationService;
 	}
 	
 	@Bean(name = BeanIds.AUTHENTICATION_MANAGER)

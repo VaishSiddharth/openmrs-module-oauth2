@@ -3,6 +3,7 @@ package org.openmrs.module.oauth2.api.impl;
 import org.openmrs.module.oauth2.Client;
 import org.openmrs.module.oauth2.api.db.hibernate.ClientDAO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.provider.ClientDetails;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.security.oauth2.provider.ClientRegistrationException;
@@ -10,6 +11,7 @@ import org.springframework.security.oauth2.provider.ClientRegistrationException;
 /**
  * Created by OPSKMC on 8/20/15.
  */
+@Configuration("clientDetails")
 public class ClientDetailsServiceImpl implements ClientDetailsService {
     public static final String REQUEST_SOURCE = ClientDetailsService.class.getName();
     @Autowired
