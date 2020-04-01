@@ -18,8 +18,10 @@ import org.springframework.security.oauth2.config.annotation.web.configuration.R
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.ResourceServerSecurityConfigurer;
+import org.springframework.security.oauth2.provider.approval.TokenStoreUserApprovalHandler;
 import org.springframework.security.oauth2.provider.approval.UserApprovalHandler;
 import org.springframework.security.oauth2.provider.client.ClientCredentialsTokenEndpointFilter;
+import org.springframework.security.oauth2.provider.error.OAuth2AccessDeniedHandler;
 import org.springframework.security.oauth2.provider.error.OAuth2AuthenticationEntryPoint;
 import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
 import org.springframework.security.oauth2.provider.token.TokenStore;
@@ -52,35 +54,39 @@ public class OAuth2ServerConfig {
 		
 		@Override
 		public void configure(HttpSecurity http) throws Exception {
-			http.httpBasic().authenticationEntryPoint(getOauthAuthenticationEntryPoint());//TODO why not getClientAuthenticationEntryPoint
+			http.httpBasic().authenticationEntryPoint(getOauthAuthenticationEntryPoint());
 			super.configure(http);
 		}
-	}
-	
-	@Bean(name = "clientAuthenticationEntryPoint")
-	public AuthenticationEntryPoint getClientAuthenticationEntryPoint() {
-		OAuth2AuthenticationEntryPoint authenticationEntryPoint = new OAuth2AuthenticationEntryPoint();
-		authenticationEntryPoint.setRealmName("openmrs/client");
-		authenticationEntryPoint.setTypeName("Basic");
-		return authenticationEntryPoint;
 	}
 	
 	@Configuration
 	@EnableAuthorizationServer
 	protected static class AuthorizationServerConfiguration extends AuthorizationServerConfigurerAdapter {
-
+		
 		@Autowired
 		private CustomTokenEnhancer customTokenEnhancer;
-
+		
 		@Autowired
 		private ClientDetailsServiceImpl clientDetailsService;
 		
-		@Autowired
-		private UserApprovalHandler userApprovalHandler;
-		
+		/*TODO here do we have to setup something like 
+		<authentication-manager id="clientAuthenticationManager" xmlns="http://www.springframework.org/schema/security">
+		        <authentication-provider ref="clientAuthenticationProvider"/>
+		        <!--user-service-ref="clientDetailsUserService"/>-->
+		    </authentication-manager>
+		    <bean id="clientAuthenticationProvider" class="org.openmrs.module.oauth2.api.impl.ClientAuthenticationServiceImpl"/>*/
+
 		@Autowired
 		@Qualifier("authenticationManager")
 		private AuthenticationManager authenticationManager;
+		
+		@Bean(name = "clientAuthenticationEntryPoint")
+		public AuthenticationEntryPoint getClientAuthenticationEntryPoint() {
+			OAuth2AuthenticationEntryPoint authenticationEntryPoint = new OAuth2AuthenticationEntryPoint();
+			authenticationEntryPoint.setRealmName("openmrs/client");
+			authenticationEntryPoint.setTypeName("Basic");
+			return authenticationEntryPoint;
+		}
 		
 		@Bean(name = "clientControllerAuthenticationManager")
 		public ClientCredentialsTokenEndpointFilter getClientControllerAuthenticationManager() {
@@ -109,6 +115,23 @@ public class OAuth2ServerConfig {
 			return tokenServices;
 		}
 		
+		@Bean(name = "userApprovalHandler")
+		public TokenStoreUserApprovalHandler getUserApprovalHandler() {
+			TokenStoreUserApprovalHandler tokenStoreUserApprovalHandler = new TokenStoreUserApprovalHandler();
+			tokenStoreUserApprovalHandler.setTokenStore(getTokenStore());
+			return tokenStoreUserApprovalHandler;
+			//TODO I think xml mapping is wrong no such class TokenServicesUserApprovalHandler
+			// <bean id="userApprovalHandler"
+			//          class="org.springframework.security.oauth2.provider.approval.TokenServicesUserApprovalHandler">
+			//        <property name="tokenServices" ref="tokenServices"/>
+			//    </bean>
+		}
+		
+		@Bean(name = "oauthAccessDeniedHandler")
+		public OAuth2AccessDeniedHandler getOauthAccessDeniedHandler() {
+			return new OAuth2AccessDeniedHandler();
+		}
+		
 		@Bean(name = "tokenStore")
 		public TokenStore getTokenStore() {
 			return new JdbcTokenStore(getJdbcTemplate());
@@ -116,7 +139,9 @@ public class OAuth2ServerConfig {
 		
 		@Override
 		public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
-			super.configure(security);
+			security.accessDeniedHandler(getOauthAccessDeniedHandler())
+			        .authenticationEntryPoint(getClientAuthenticationEntryPoint())
+			        .addTokenEndpointAuthenticationFilter(getClientControllerAuthenticationManager());
 		}
 		
 		@Override
@@ -126,7 +151,7 @@ public class OAuth2ServerConfig {
 		
 		@Override
 		public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
-			endpoints.tokenStore(getTokenStore()).userApprovalHandler(userApprovalHandler)
+			endpoints.tokenStore(getTokenStore()).userApprovalHandler(getUserApprovalHandler())
 			        .authenticationManager(authenticationManager);
 		}
 	}
