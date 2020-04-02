@@ -6,8 +6,13 @@ import org.openmrs.module.oauth2.api.impl.ClientDetailsServiceImpl;
 import org.openmrs.module.oauth2.web.util.CustomTokenEnhancer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.config.ConstructorArgumentValues;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.access.AccessDecisionVoter;
+import org.springframework.security.access.vote.AuthenticatedVoter;
+import org.springframework.security.access.vote.RoleVoter;
+import org.springframework.security.access.vote.UnanimousBased;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
@@ -21,26 +26,45 @@ import org.springframework.security.oauth2.config.annotation.web.configurers.Res
 import org.springframework.security.oauth2.provider.approval.TokenStoreUserApprovalHandler;
 import org.springframework.security.oauth2.provider.approval.UserApprovalHandler;
 import org.springframework.security.oauth2.provider.client.ClientCredentialsTokenEndpointFilter;
+import org.springframework.security.oauth2.provider.client.ClientDetailsUserDetailsService;
 import org.springframework.security.oauth2.provider.error.OAuth2AccessDeniedHandler;
 import org.springframework.security.oauth2.provider.error.OAuth2AuthenticationEntryPoint;
 import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.JdbcTokenStore;
+import org.springframework.security.oauth2.provider.vote.ScopeVoter;
 import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import sun.tools.jstat.Token;
 
 import javax.sql.DataSource;
+import java.lang.reflect.Constructor;
 
 @Configuration
 public class OAuth2ServerConfig {
 	
 	private static final String OPENMRS_RESOURCE_ID = "OpenMRS";
+
+	@Bean(name = "accessDecisionManager")
+    public UnanimousBased getAccessDecisionManager()
+    {
+        ConstructorArgumentValues constructorArgumentValues=new ConstructorArgumentValues();
+        constructorArgumentValues.addGenericArgumentValue(new ScopeVoter());
+        constructorArgumentValues.addGenericArgumentValue(new RoleVoter());
+        constructorArgumentValues.addGenericArgumentValue(new AuthenticatedVoter());
+        return new UnanimousBased(null);// TODO return something
+    }
 	
 	@Bean(name = "oauthAuthenticationEntryPoint")
 	public AuthenticationEntryPoint getOauthAuthenticationEntryPoint() {
 		OAuth2AuthenticationEntryPoint authenticationEntryPoint = new OAuth2AuthenticationEntryPoint();
 		authenticationEntryPoint.setRealmName("openmrs");
 		return authenticationEntryPoint;
+	}
+	
+	@Bean(name = "oauthAccessDeniedHandler")
+	public AccessDeniedHandler getAccessDeniedHandler() {
+		return new OAuth2AccessDeniedHandler();
 	}
 	
 	@Configuration
@@ -54,8 +78,10 @@ public class OAuth2ServerConfig {
 		
 		@Override
 		public void configure(HttpSecurity http) throws Exception {
-			http.httpBasic().authenticationEntryPoint(getOauthAuthenticationEntryPoint());
-			super.configure(http);
+			http.httpBasic().authenticationEntryPoint(getOauthAuthenticationEntryPoint())
+                    .and().antMatcher("/ws/fhir/**")
+			        .authorizeRequests().anyRequest().hasAnyRole("ROLE_USER", "ROLE_CLIENT").and().exceptionHandling()
+			        .accessDeniedHandler(getAccessDeniedHandler()).and().anonymous().disable();
 		}
 	}
 	
@@ -75,7 +101,7 @@ public class OAuth2ServerConfig {
 		        <!--user-service-ref="clientDetailsUserService"/>-->
 		    </authentication-manager>
 		    <bean id="clientAuthenticationProvider" class="org.openmrs.module.oauth2.api.impl.ClientAuthenticationServiceImpl"/>*/
-
+		
 		@Autowired
 		@Qualifier("authenticationManager")
 		private AuthenticationManager authenticationManager;
