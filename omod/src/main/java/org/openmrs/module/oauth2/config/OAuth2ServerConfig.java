@@ -35,7 +35,6 @@ import org.springframework.security.oauth2.provider.token.store.JdbcTokenStore;
 import org.springframework.security.oauth2.provider.vote.ScopeVoter;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.access.AccessDeniedHandler;
-import sun.tools.jstat.Token;
 
 import javax.sql.DataSource;
 import java.lang.reflect.Constructor;

@@ -26,24 +26,24 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 public class MetadataControllerTest extends BaseModuleWebContextSensitiveTest {
-	
+
 	@Autowired
 	private MetadataController controller;
-	
+
 	@Test
 	public void shouldReturnOkStatus() {
 		assertTrue(controller.getMetadata().getStatusCode() == HttpStatus.OK);
 	}
-	
+
 	@Test
 	@SuppressWarnings("unchecked")
 	public void shouldGetMetadata() {
 		ResponseEntity<HashMap<String, Object>> res = controller.getMetadata();
 		HashMap<String, Object> body = res.getBody();
-		
+
 		assertTrue(body.containsKey("resourceType"));
 		assertTrue(body.get("rest") instanceof List);
-		
+
 		List<HashMap<String, Object>> restList = (List<HashMap<String, Object>>) body.get("rest");
 		assertTrue(restList.size() == 1);
 	}
