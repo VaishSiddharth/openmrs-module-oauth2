@@ -1,19 +1,12 @@
 package org.openmrs.module.oauth2.config;
 
-import com.mchange.v2.c3p0.DriverManagerDataSource;
-
 import org.openmrs.module.oauth2.api.impl.ClientDetailsServiceImpl;
 import org.openmrs.module.oauth2.web.util.CustomTokenEnhancer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.config.ConstructorArgumentValues;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.access.AccessDecisionVoter;
-import org.springframework.security.access.vote.AuthenticatedVoter;
-import org.springframework.security.access.vote.RoleVoter;
-import org.springframework.security.access.vote.UnanimousBased;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.BeanIds;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
@@ -24,64 +17,37 @@ import org.springframework.security.oauth2.config.annotation.web.configurers.Aut
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.ResourceServerSecurityConfigurer;
 import org.springframework.security.oauth2.provider.approval.TokenStoreUserApprovalHandler;
-import org.springframework.security.oauth2.provider.approval.UserApprovalHandler;
 import org.springframework.security.oauth2.provider.client.ClientCredentialsTokenEndpointFilter;
-import org.springframework.security.oauth2.provider.client.ClientDetailsUserDetailsService;
 import org.springframework.security.oauth2.provider.error.OAuth2AccessDeniedHandler;
-import org.springframework.security.oauth2.provider.error.OAuth2AuthenticationEntryPoint;
 import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
 import org.springframework.security.oauth2.provider.token.TokenStore;
-import org.springframework.security.oauth2.provider.token.store.JdbcTokenStore;
-import org.springframework.security.oauth2.provider.vote.ScopeVoter;
 import org.springframework.security.web.AuthenticationEntryPoint;
-import org.springframework.security.web.access.AccessDeniedHandler;
-
-import javax.sql.DataSource;
-import java.lang.reflect.Constructor;
 
 @Configuration
 public class OAuth2ServerConfig {
 	
 	private static final String OPENMRS_RESOURCE_ID = "OpenMRS";
 
-	@Bean(name = "accessDecisionManager")
-    public UnanimousBased getAccessDecisionManager()
-    {
-        ConstructorArgumentValues constructorArgumentValues=new ConstructorArgumentValues();
-        constructorArgumentValues.addGenericArgumentValue(new ScopeVoter());
-        constructorArgumentValues.addGenericArgumentValue(new RoleVoter());
-        constructorArgumentValues.addGenericArgumentValue(new AuthenticatedVoter());
-        return new UnanimousBased(null);// TODO return something
-    }
-	
-	@Bean(name = "oauthAuthenticationEntryPoint")
-	public AuthenticationEntryPoint getOauthAuthenticationEntryPoint() {
-		OAuth2AuthenticationEntryPoint authenticationEntryPoint = new OAuth2AuthenticationEntryPoint();
-		authenticationEntryPoint.setRealmName("openmrs");
-		return authenticationEntryPoint;
-	}
-	
-	@Bean(name = "oauthAccessDeniedHandler")
-	public AccessDeniedHandler getAccessDeniedHandler() {
-		return new OAuth2AccessDeniedHandler();
-	}
+	@Qualifier("tokenServices")
+	@Autowired
+	private DefaultTokenServices tokenServices;
 	
 	@Configuration
 	@EnableResourceServer
 	protected class ResourceServerConfiguration extends ResourceServerConfigurerAdapter {
-		
+		//TODO <oauth:resource-server id="OpenMRSGenericResourceServerFilter"
+		//                           token-services-ref="tokenServices"/>
 		@Override
 		public void configure(ResourceServerSecurityConfigurer resources) throws Exception {
-			resources.resourceId(OPENMRS_RESOURCE_ID).stateless(false);
+			resources.tokenServices(tokenServices);
+			resources.resourceId(OPENMRS_RESOURCE_ID);
 		}
-		
+
 		@Override
 		public void configure(HttpSecurity http) throws Exception {
-			http.httpBasic().authenticationEntryPoint(getOauthAuthenticationEntryPoint())
-                    .and().antMatcher("/ws/fhir/**")
-			        .authorizeRequests().anyRequest().hasAnyRole("ROLE_USER", "ROLE_CLIENT").and().exceptionHandling()
-			        .accessDeniedHandler(getAccessDeniedHandler()).and().anonymous().disable();
+			super.configure(http);
 		}
+
 	}
 	
 	@Configuration
@@ -100,73 +66,37 @@ public class OAuth2ServerConfig {
 		        <!--user-service-ref="clientDetailsUserService"/>-->
 		    </authentication-manager>
 		    <bean id="clientAuthenticationProvider" class="org.openmrs.module.oauth2.api.impl.ClientAuthenticationServiceImpl"/>*/
-		
+
+
+		@Qualifier(BeanIds.AUTHENTICATION_MANAGER)
 		@Autowired
-		@Qualifier("authenticationManager")
 		private AuthenticationManager authenticationManager;
 		
-		@Bean(name = "clientAuthenticationEntryPoint")
-		public AuthenticationEntryPoint getClientAuthenticationEntryPoint() {
-			OAuth2AuthenticationEntryPoint authenticationEntryPoint = new OAuth2AuthenticationEntryPoint();
-			authenticationEntryPoint.setRealmName("openmrs/client");
-			authenticationEntryPoint.setTypeName("Basic");
-			return authenticationEntryPoint;
-		}
+		@Qualifier("clientAuthenticationEntryPoint")
+		@Autowired
+		private AuthenticationEntryPoint clientAuthenticationEntryPoint;
 		
-		@Bean(name = "clientControllerAuthenticationManager")
-		public ClientCredentialsTokenEndpointFilter getClientControllerAuthenticationManager() {
-			ClientCredentialsTokenEndpointFilter clientCredentialsTokenEndpointFilter = new ClientCredentialsTokenEndpointFilter();
-			clientCredentialsTokenEndpointFilter.setAuthenticationManager(authenticationManager);
-			return clientCredentialsTokenEndpointFilter;
-		}
+		@Qualifier("clientControllerAuthenticationManager")
+		@Autowired
+		public ClientCredentialsTokenEndpointFilter clientControllerAuthenticationManager;
+
+		@Qualifier("userApprovalHandler")
+		@Autowired
+		public TokenStoreUserApprovalHandler userApprovalHandler;
 		
-		@Bean(name = "jdbcTemplate")
-		public DataSource getJdbcTemplate() {
-			DriverManagerDataSource dataSource = new DriverManagerDataSource();
-			dataSource.setDriverClass("com.mysql.jdbc.Driver");
-			dataSource.setJdbcUrl("jdbc:mysql://localhost:3306/openmrs");
-			dataSource.setUser("root");
-			dataSource.setPassword("root");
-			return dataSource;
-		}
-		
-		@Bean(name = "tokenServices")
-		public DefaultTokenServices getTokenServices() {
-			DefaultTokenServices tokenServices = new DefaultTokenServices();
-			tokenServices.setTokenStore(getTokenStore());
-			tokenServices.setSupportRefreshToken(true);
-			tokenServices.setClientDetailsService(clientDetailsService);
-			tokenServices.setTokenEnhancer(customTokenEnhancer);
-			return tokenServices;
-		}
-		
-		@Bean(name = "userApprovalHandler")
-		public TokenStoreUserApprovalHandler getUserApprovalHandler() {
-			TokenStoreUserApprovalHandler tokenStoreUserApprovalHandler = new TokenStoreUserApprovalHandler();
-			tokenStoreUserApprovalHandler.setTokenStore(getTokenStore());
-			return tokenStoreUserApprovalHandler;
-			//TODO I think xml mapping is wrong no such class TokenServicesUserApprovalHandler
-			// <bean id="userApprovalHandler"
-			//          class="org.springframework.security.oauth2.provider.approval.TokenServicesUserApprovalHandler">
-			//        <property name="tokenServices" ref="tokenServices"/>
-			//    </bean>
-		}
-		
-		@Bean(name = "oauthAccessDeniedHandler")
-		public OAuth2AccessDeniedHandler getOauthAccessDeniedHandler() {
-			return new OAuth2AccessDeniedHandler();
-		}
-		
-		@Bean(name = "tokenStore")
-		public TokenStore getTokenStore() {
-			return new JdbcTokenStore(getJdbcTemplate());
-		}
-		
+		@Qualifier("oauthAccessDeniedHandler")
+		@Autowired
+		private OAuth2AccessDeniedHandler oauthAccessDeniedHandler;
+
+		@Qualifier("tokenStore")
+		@Autowired
+		public TokenStore tokenStore;
+
 		@Override
 		public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
-			security.accessDeniedHandler(getOauthAccessDeniedHandler())
-			        .authenticationEntryPoint(getClientAuthenticationEntryPoint())
-			        .addTokenEndpointAuthenticationFilter(getClientControllerAuthenticationManager());
+			security.accessDeniedHandler(oauthAccessDeniedHandler)
+			        .authenticationEntryPoint(clientAuthenticationEntryPoint)
+			        .addTokenEndpointAuthenticationFilter(clientControllerAuthenticationManager);
 		}
 		
 		@Override
@@ -176,9 +106,22 @@ public class OAuth2ServerConfig {
 		
 		@Override
 		public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
-			endpoints.tokenStore(getTokenStore()).userApprovalHandler(getUserApprovalHandler())
+			endpoints.tokenStore(tokenStore).userApprovalHandler(userApprovalHandler)
 			        .authenticationManager(authenticationManager);
 		}
+		//TODO <oauth:authorization-server client-details-service-ref="clientDetails" token-services-ref="tokenServices"
+		//                                user-approval-handler-ref="userApprovalHandler" token-endpoint-url="/oauth2/token"
+		//                                user-approval-page="forward:/ws/oauth/confirm_access"
+		//                                authorization-endpoint-url="/oauth2/authorize"
+		//                                approval-parameter-name="user_oauth_approval"
+		//                                error-page="/module/oauth2/oauth_error">
+		//        <oauth:authorization-code disabled="false"/>
+		//        <oauth:implicit/>
+		//        <oauth:refresh-token/>
+		//        <oauth:client-credentials/>
+		//        <oauth:password/>
+		//    </oauth:authorization-server>
+
 	}
 	
 }

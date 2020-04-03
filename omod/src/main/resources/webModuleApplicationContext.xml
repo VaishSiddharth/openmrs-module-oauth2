@@ -49,6 +49,7 @@
     <!--===================================================================-->
     <!--Custom Authentication Manager for OAuth clients-->
     <!--===================================================================-->
+    <!--    TODO mapping-->
     <security:authentication-manager id="clientControllerAuthenticationManager">
         <security:authentication-provider ref="clientControllerAuthenticationProvider"/>
     </security:authentication-manager>
@@ -61,6 +62,7 @@
     <!--This will be used to process User credentials when he/she authorizes an OAuth Client-->
     <!--via Authorization Code/ Implicit Grant Type-->
     <!--===================================================================-->
+<!--    TODO Check mapping-->
     <security:authentication-manager alias="authenticationManager">
         <security:authentication-provider ref="userAuthenticationProvider">
                    <!--<security:user-service id="userDetailsService">
@@ -101,6 +103,7 @@
     <!-- To be used to initiate User credentials verification with basic header-->
     <bean id="UserAuthenticationEntryPoint"
           class="org.springframework.security.oauth2.provider.error.OAuth2AuthenticationEntryPoint">
+<!--        TODO  check if <property name="realmName" value="openmrs/user"/>-->
         <property name="realmName" value="openmrs/client"/>
         <property name="typeName" value="Basic"/>
     </bean>
@@ -202,6 +205,7 @@
     <!--==============================================-->
     <!--Authentication Manager and Authentication Provider for OAuth2 Clients-->
     <!--==============================================-->
+<!--    TODO CHECK mapping-->
     <authentication-manager id="clientAuthenticationManager" xmlns="http://www.springframework.org/schema/security">
         <authentication-provider ref="clientAuthenticationProvider"/>
         <!--user-service-ref="clientDetailsUserService"/>-->
@@ -230,6 +234,7 @@
     <!--==========================================-->
     <!--OAuth Resource Server for OpenMRS instance-->
     <!--==========================================-->
+<!--    TODO mapping-->
     <oauth:resource-server id="OpenMRSGenericResourceServerFilter"
                            token-services-ref="tokenServices"/>
 
@@ -238,6 +243,7 @@
     <!--TODO add/verify docs-->
     <!--Verifies if user has authorized the client and then the token has been issued-->
     <!--==================================================================================-->
+<!--    TODO Wrong mapping TokenServicesUserApprovalHandler nothing like this-->
     <bean id="userApprovalHandler"
           class="org.springframework.security.oauth2.provider.approval.TokenServicesUserApprovalHandler">
         <property name="tokenServices" ref="tokenServices"/>

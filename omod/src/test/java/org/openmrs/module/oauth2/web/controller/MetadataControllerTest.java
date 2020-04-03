@@ -20,12 +20,21 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.openmrs.module.oauth2.config.MethodSecurityConfig;
+import org.openmrs.module.oauth2.config.SecurityConfig;
 import org.openmrs.web.test.BaseModuleWebContextSensitiveTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.web.WebAppConfiguration;
 
-public class MetadataControllerTest extends BaseModuleWebContextSensitiveTest {
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(classes = {SecurityConfig.class})
+@WebAppConfiguration
+public class MetadataControllerTest {
 
 	@Autowired
 	private MetadataController controller;

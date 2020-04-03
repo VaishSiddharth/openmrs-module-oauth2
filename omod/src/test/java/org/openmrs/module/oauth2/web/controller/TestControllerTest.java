@@ -6,7 +6,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.MockitoAnnotations;
 import org.openmrs.module.oauth2.config.MethodSecurityConfig;
-import org.openmrs.module.oauth2.config.WebMvcConfig;
+import org.openmrs.module.oauth2.config.SecurityConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.web.FilterChainProxy;
 import org.springframework.test.context.ContextConfiguration;
@@ -21,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = {Application.class, MethodSecurityConfig.class, WebMvcConfig.class, WebMvcConfig.class})
+@ContextConfiguration(classes = {SecurityConfig.class})
 @WebAppConfiguration
 public class TestControllerTest {
 	
@@ -29,9 +29,7 @@ public class TestControllerTest {
 	private WebApplicationContext wac;
 	
 	private MockMvc mockMvc;
-	
-	@Autowired
-	private FilterChainProxy filterChainProxy;
+
 	
 	//    @Before
 	//    public void setup() {
@@ -47,7 +45,7 @@ public class TestControllerTest {
 	@Before
 	public void setUp() {
 		MockitoAnnotations.initMocks(this);
-		this.mockMvc = webAppContextSetup(wac).dispatchOptions(true).addFilters(filterChainProxy).build();
+		this.mockMvc = webAppContextSetup(wac).dispatchOptions(true).build();
 	}
 	
 	@Test
