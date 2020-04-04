@@ -19,9 +19,9 @@ import org.springframework.security.oauth2.config.annotation.web.configurers.Res
 import org.springframework.security.oauth2.provider.approval.TokenStoreUserApprovalHandler;
 import org.springframework.security.oauth2.provider.client.ClientCredentialsTokenEndpointFilter;
 import org.springframework.security.oauth2.provider.error.OAuth2AccessDeniedHandler;
+import org.springframework.security.oauth2.provider.error.OAuth2AuthenticationEntryPoint;
 import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
 import org.springframework.security.oauth2.provider.token.TokenStore;
-import org.springframework.security.web.AuthenticationEntryPoint;
 
 @Configuration
 public class OAuth2ServerConfig {
@@ -49,18 +49,18 @@ public class OAuth2ServerConfig {
 		}
 
 	}
-	
+
 	@Configuration
 	@EnableAuthorizationServer
 	protected static class AuthorizationServerConfiguration extends AuthorizationServerConfigurerAdapter {
-		
+
 		@Autowired
 		private CustomTokenEnhancer customTokenEnhancer;
-		
+
 		@Autowired
 		private ClientDetailsServiceImpl clientDetailsService;
-		
-		/*TODO here do we have to setup something like 
+
+		/*TODO here do we have to setup something like
 		<authentication-manager id="clientAuthenticationManager" xmlns="http://www.springframework.org/schema/security">
 		        <authentication-provider ref="clientAuthenticationProvider"/>
 		        <!--user-service-ref="clientDetailsUserService"/>-->
@@ -71,19 +71,19 @@ public class OAuth2ServerConfig {
 		@Qualifier(BeanIds.AUTHENTICATION_MANAGER)
 		@Autowired
 		private AuthenticationManager authenticationManager;
-		
+
 		@Qualifier("clientAuthenticationEntryPoint")
 		@Autowired
-		private AuthenticationEntryPoint clientAuthenticationEntryPoint;
-		
-		@Qualifier("clientControllerAuthenticationManager")
+		private OAuth2AuthenticationEntryPoint clientAuthenticationEntryPoint;
+
+		@Qualifier("clientControllerEndpointFilter")
 		@Autowired
-		public ClientCredentialsTokenEndpointFilter clientControllerAuthenticationManager;
+		public ClientCredentialsTokenEndpointFilter clientControllerEndpointFilter;
 
 		@Qualifier("userApprovalHandler")
 		@Autowired
 		public TokenStoreUserApprovalHandler userApprovalHandler;
-		
+
 		@Qualifier("oauthAccessDeniedHandler")
 		@Autowired
 		private OAuth2AccessDeniedHandler oauthAccessDeniedHandler;
@@ -92,25 +92,29 @@ public class OAuth2ServerConfig {
 		@Autowired
 		public TokenStore tokenStore;
 
+		@Qualifier("tokenServices")
+		@Autowired
+		private DefaultTokenServices tokenServices;
+
 		@Override
 		public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
 			security.accessDeniedHandler(oauthAccessDeniedHandler)
-			        .authenticationEntryPoint(clientAuthenticationEntryPoint)
-			        .addTokenEndpointAuthenticationFilter(clientControllerAuthenticationManager);
+					.authenticationEntryPoint(clientAuthenticationEntryPoint)
+					.addTokenEndpointAuthenticationFilter(clientControllerEndpointFilter);
 		}
-		
+
 		@Override
 		public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
 			clients.withClientDetails(clientDetailsService);
 		}
-		
+
 		@Override
 		public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
-			endpoints.tokenStore(tokenStore).userApprovalHandler(userApprovalHandler)
-			        .authenticationManager(authenticationManager);
+			endpoints.tokenServices(tokenServices).tokenStore(tokenStore).userApprovalHandler(userApprovalHandler)
+					.authenticationManager(authenticationManager);
 		}
-		//TODO <oauth:authorization-server client-details-service-ref="clientDetails" token-services-ref="tokenServices"
-		//                                user-approval-handler-ref="userApprovalHandler" token-endpoint-url="/oauth2/token"
+		//TODO <oauth:authorization-server
+		//                                token-endpoint-url="/oauth2/token"
 		//                                user-approval-page="forward:/ws/oauth/confirm_access"
 		//                                authorization-endpoint-url="/oauth2/authorize"
 		//                                approval-parameter-name="user_oauth_approval"
@@ -123,5 +127,5 @@ public class OAuth2ServerConfig {
 		//    </oauth:authorization-server>
 
 	}
-	
+
 }

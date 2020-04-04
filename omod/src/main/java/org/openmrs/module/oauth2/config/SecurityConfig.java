@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportResource;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.access.AccessDecisionManager;
 import org.springframework.security.access.AccessDecisionVoter;
 import org.springframework.security.access.vote.AuthenticatedVoter;
 import org.springframework.security.access.vote.RoleVoter;
@@ -28,9 +29,10 @@ import org.springframework.security.oauth2.provider.error.OAuth2AuthenticationEn
 import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
 import org.springframework.security.oauth2.provider.token.store.JdbcTokenStore;
 import org.springframework.security.oauth2.provider.vote.ScopeVoter;
-import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+
+import java.util.ArrayList;
 import java.util.List;
 
 @Configuration
@@ -95,16 +97,17 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		}
 		return clientCredentialsTokenEndpointFilter;
 	}
-	
+
 	@Bean(name = "accessDecisionManager")
-	public UnanimousBased unanimousBased(List<AccessDecisionVoter<?>> list) {
+	public AccessDecisionManager accessDecisionManager() {
+		List<AccessDecisionVoter<?>> decisionVoters=new ArrayList<>();
 		ScopeVoter scopeVoter = new ScopeVoter();
 		RoleVoter roleVoter = new RoleVoter();
 		AuthenticatedVoter authenticatedVoter = new AuthenticatedVoter();
-		list.add(scopeVoter);
-		list.add(authenticatedVoter);
-		list.add(roleVoter);
-		return new UnanimousBased(list);
+		decisionVoters.add(scopeVoter);
+		decisionVoters.add(authenticatedVoter);
+		decisionVoters.add(roleVoter);
+		return new UnanimousBased(decisionVoters);
 	}
 	
 	@Bean(name = "jdbcTemplate")
