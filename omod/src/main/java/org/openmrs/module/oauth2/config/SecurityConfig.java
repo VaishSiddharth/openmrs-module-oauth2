@@ -48,12 +48,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	@Autowired
 	private ClientAuthenticationServiceImpl clientAuthenticationService;
 
-	@Autowired
-	private AuthenticationManager authenticationManager;
 	
 	@Bean(name = "basicAuthenticationFilter")
-	public BasicAuthenticationFilter authenticationEntryPoint() {
-		return new BasicAuthenticationFilter(authenticationManager,getClientAuthenticationEntryPoint());
+	public BasicAuthenticationFilter authenticationEntryPoint() throws Exception {
+		return new BasicAuthenticationFilter(authenticationManager(),getClientAuthenticationEntryPoint());
 		//TODO
 		/*<bean id="basicAuthenticationFilter" class="org.springframework.security.web.authentication.www.BasicAuthenticationFilter">
 		<constructor-arg ref="authenticationManager"/>
@@ -160,6 +158,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		//          class="org.springframework.security.oauth2.provider.approval.TokenServicesUserApprovalHandler">
 		//        <property name="tokenServices" ref="tokenServices"/>
 		//    </bean>
+	}
+
+	@Bean(name = BeanIds.AUTHENTICATION_MANAGER)
+	@Override
+	public AuthenticationManager authenticationManagerBean() throws Exception {
+		return super.authenticationManagerBean();
 	}
 
 	@Bean(name = "oauthAccessDeniedHandler")
