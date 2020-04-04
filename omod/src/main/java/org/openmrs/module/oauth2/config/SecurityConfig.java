@@ -21,11 +21,13 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.provider.OAuth2RequestFactory;
 import org.springframework.security.oauth2.provider.approval.TokenStoreUserApprovalHandler;
 import org.springframework.security.oauth2.provider.client.ClientCredentialsTokenEndpointFilter;
 import org.springframework.security.oauth2.provider.client.ClientDetailsUserDetailsService;
 import org.springframework.security.oauth2.provider.error.OAuth2AccessDeniedHandler;
 import org.springframework.security.oauth2.provider.error.OAuth2AuthenticationEntryPoint;
+import org.springframework.security.oauth2.provider.request.DefaultOAuth2RequestFactory;
 import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
 import org.springframework.security.oauth2.provider.token.store.JdbcTokenStore;
 import org.springframework.security.oauth2.provider.vote.ScopeVoter;
@@ -45,17 +47,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	
 	@Autowired
 	private ClientAuthenticationServiceImpl clientAuthenticationService;
+
+	@Autowired
+	private AuthenticationManager authenticationManager;
 	
 	@Bean(name = "basicAuthenticationFilter")
-	public BasicAuthenticationFilter authenticationEntryPoint(AuthenticationManager authenticationManager,
-	        OAuth2AuthenticationEntryPoint oAuth2AuthenticationEntryPoint) {
-		try {
-			return new BasicAuthenticationFilter(authenticationManagerBean(), getClientAuthenticationEntryPoint());
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-		}
-		return null;
+	public BasicAuthenticationFilter authenticationEntryPoint() {
+		return new BasicAuthenticationFilter(authenticationManager,getClientAuthenticationEntryPoint());
 		//TODO
 		/*<bean id="basicAuthenticationFilter" class="org.springframework.security.web.authentication.www.BasicAuthenticationFilter">
 		<constructor-arg ref="authenticationManager"/>
@@ -126,9 +124,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	}
 	
 	@Bean(name = "tokenStore")
-	public JdbcTokenStore getTokenStore(DriverManagerDataSource driverManagerDataSource) {
-		driverManagerDataSource = getJdbcTemplate();
-		return new JdbcTokenStore(driverManagerDataSource);
+	public JdbcTokenStore getTokenStore() {
+		return new JdbcTokenStore(getJdbcTemplate());
 	}
 	@Autowired
 	private CustomTokenEnhancer customTokenEnhancer;
@@ -140,17 +137,23 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	public DefaultTokenServices getTokenServices()
 	{
 		DefaultTokenServices defaultTokenServices=new DefaultTokenServices();
-		defaultTokenServices.setTokenStore(getTokenStore(new DriverManagerDataSource()));//TODO check
+		defaultTokenServices.setTokenStore(getTokenStore());//TODO check
 		defaultTokenServices.setSupportRefreshToken(true);
 		defaultTokenServices.setClientDetailsService(clientDetailsService);
 		defaultTokenServices.setTokenEnhancer(customTokenEnhancer);
 		return defaultTokenServices;
 	}
 
+	@Bean
+	public OAuth2RequestFactory oAuth2RequestFactory(){
+		return new DefaultOAuth2RequestFactory(clientDetailsService);
+	}
+
 	@Bean(name = "userApprovalHandler")
 	public TokenStoreUserApprovalHandler getUserApprovalHandler() {
 		TokenStoreUserApprovalHandler tokenStoreUserApprovalHandler = new TokenStoreUserApprovalHandler();
-		tokenStoreUserApprovalHandler.setTokenStore(getTokenStore(new DriverManagerDataSource()));//TODO check
+		tokenStoreUserApprovalHandler.setTokenStore(getTokenStore());//TODO check
+		tokenStoreUserApprovalHandler.setRequestFactory(oAuth2RequestFactory());
 		return tokenStoreUserApprovalHandler;
 		//TODO I think xml mapping is wrong no such class TokenServicesUserApprovalHandler
 		// <bean id="userApprovalHandler"
@@ -158,13 +161,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		//        <property name="tokenServices" ref="tokenServices"/>
 		//    </bean>
 	}
-	
-	@Bean(name = BeanIds.AUTHENTICATION_MANAGER)
-	@Override
-	public AuthenticationManager authenticationManagerBean() throws Exception {
-		return super.authenticationManagerBean();
-	}
-	
+
 	@Bean(name = "oauthAccessDeniedHandler")
 	public OAuth2AccessDeniedHandler getAccessDeniedHandler() {
 		return new OAuth2AccessDeniedHandler();
