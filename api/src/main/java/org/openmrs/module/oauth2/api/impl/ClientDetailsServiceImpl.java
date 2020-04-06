@@ -7,11 +7,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.provider.ClientDetails;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.security.oauth2.provider.ClientRegistrationException;
+import org.springframework.stereotype.Component;
 
 /**
  * Created by OPSKMC on 8/20/15.
  */
-@Configuration("clientDetails")
+@Component("clientDetails")
 public class ClientDetailsServiceImpl implements ClientDetailsService {
     public static final String REQUEST_SOURCE = ClientDetailsService.class.getName();
     @Autowired

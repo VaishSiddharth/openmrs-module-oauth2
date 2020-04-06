@@ -21,12 +21,14 @@ import org.openmrs.module.oauth2.api.db.Oauth2DAO;
 import org.openmrs.module.oauth2.api.model.AuthorizedGrantType;
 import org.openmrs.module.oauth2.api.model.Scope;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 /**
  * It is a default implementation of {@link Oauth2Service}.
  */
+@Component
 public class Oauth2ServiceImpl extends BaseOpenmrsService implements Oauth2Service {
 	
 	protected final Log log = LogFactory.getLog(this.getClass());

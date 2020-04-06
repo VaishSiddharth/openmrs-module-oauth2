@@ -131,16 +131,19 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	@Autowired
 	private ClientDetailsServiceImpl clientDetailsService;
 
-	@Bean(name = "tokenServices")
-	public DefaultTokenServices getTokenServices()
-	{
-		DefaultTokenServices defaultTokenServices=new DefaultTokenServices();
-		defaultTokenServices.setTokenStore(getTokenStore());//TODO check
-		defaultTokenServices.setSupportRefreshToken(true);
-		defaultTokenServices.setClientDetailsService(clientDetailsService);
-		defaultTokenServices.setTokenEnhancer(customTokenEnhancer);
-		return defaultTokenServices;
-	}
+//	@Autowired
+//	private DefaultTokenServices tokenServices;
+
+//	@Bean(name = "tokenServices")
+//	public DefaultTokenServices getTokenServices()
+//	{
+//		DefaultTokenServices defaultTokenServices=new DefaultTokenServices();
+//		defaultTokenServices.setTokenStore(getTokenStore());//TODO check
+//		defaultTokenServices.setSupportRefreshToken(true);
+//		defaultTokenServices.setClientDetailsService(clientDetailsService);
+//		defaultTokenServices.setTokenEnhancer(customTokenEnhancer);
+//		return defaultTokenServices;
+//	}
 
 	@Bean
 	public OAuth2RequestFactory oAuth2RequestFactory(){

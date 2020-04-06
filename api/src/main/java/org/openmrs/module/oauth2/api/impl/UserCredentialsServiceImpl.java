@@ -9,12 +9,15 @@ import org.openmrs.module.oauth2.api.db.hibernate.UserCredentialsDAO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Component;
 
 /**
  * Implementation of {@link org.springframework.security.core.userdetails.UserDetailsService}
  * Read Username and Password from OpenMRS database and map it to {@link org.springframework.security.core.userdetails.UserDetails}
  * Created by OPSKMC on 8/9/15.
  */
+
+@Component
 @Deprecated
 public class UserCredentialsServiceImpl extends BaseOpenmrsService implements UserCredentialsService {
     @Autowired

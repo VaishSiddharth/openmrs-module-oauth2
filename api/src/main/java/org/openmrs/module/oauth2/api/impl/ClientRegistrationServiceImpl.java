@@ -13,6 +13,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.provider.ClientDetails;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.security.oauth2.provider.ClientRegistrationException;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.ManyToOne;
@@ -27,6 +28,7 @@ import java.util.List;
  * Created by OPSKMC on 5/5/15.
  */
 
+@Component
 public class ClientRegistrationServiceImpl extends BaseOpenmrsService implements ClientRegistrationService {
 
 

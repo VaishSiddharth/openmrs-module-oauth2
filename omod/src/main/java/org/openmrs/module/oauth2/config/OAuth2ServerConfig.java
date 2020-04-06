@@ -28,18 +28,18 @@ public class OAuth2ServerConfig {
 	
 	private static final String OPENMRS_RESOURCE_ID = "OpenMRS";
 
-	@Qualifier("tokenServices")
-	@Autowired
-	private DefaultTokenServices tokenServices;
+//	@Qualifier("tokenServices")
+//	@Autowired
+//	private DefaultTokenServices tokenServices;
 	
 	@Configuration
 	@EnableResourceServer
-	protected class ResourceServerConfiguration extends ResourceServerConfigurerAdapter {
+	protected static class ResourceServerConfiguration extends ResourceServerConfigurerAdapter {
 		//TODO <oauth:resource-server id="OpenMRSGenericResourceServerFilter"
 		//                           token-services-ref="tokenServices"/>
 		@Override
 		public void configure(ResourceServerSecurityConfigurer resources) throws Exception {
-			resources.tokenServices(tokenServices);
+//			resources.tokenServices(tokenServices);
 			resources.resourceId(OPENMRS_RESOURCE_ID);
 		}
 
@@ -92,9 +92,9 @@ public class OAuth2ServerConfig {
 		@Autowired
 		public TokenStore tokenStore;
 
-		@Qualifier("tokenServices")
-		@Autowired
-		private DefaultTokenServices tokenServices;
+//		@Qualifier("tokenServices")
+//		@Autowired
+//		private DefaultTokenServices tokenServices;
 
 		@Override
 		public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
@@ -110,7 +110,7 @@ public class OAuth2ServerConfig {
 
 		@Override
 		public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
-			endpoints.tokenServices(tokenServices).tokenStore(tokenStore).userApprovalHandler(userApprovalHandler)
+			endpoints.tokenStore(tokenStore).userApprovalHandler(userApprovalHandler)
 					.authenticationManager(authenticationManager);
 		}
 		//TODO <oauth:authorization-server
